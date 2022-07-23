@@ -17,24 +17,19 @@ int main()
     CPU cpu;
     cpu.Reset(mem);
 
-    int num1 = 144;
-    int num2 = 208;
-    // printf("%s", "Add C to A \n"); // 144 + 208 sets OF
-    // cout << "Enter A: ";
-    // cin >> num1;
-    // cout << "Enter C: ";
-    // cin >> num2;
-
-    // Program Code
+    //  Program Code
     mem[0x0] = JUMP_IMM16;
     mem[0x1] = 0x0;
     mem[0x2] = 0x80;
-    mem[0x8000] = MOV_C_IMM8;
-    mem[0x8001] = num2;
-    mem[0x8002] = MOV_A_IMM8;
-    mem[0x8003] = num1;
-    mem[0x8004] = ADD_C;
-    mem[0x8005] = HALT;
+    mem[0x8000] = MOV_F_IMM16;
+    mem[0x8001] = 0xff;
+    mem[0x8002] = 0x22;
+    mem[0x8003] = MOV_C_MEM_F;
+    mem[0x8004] = MOV_A_IMM8;
+    mem[0x8005] = 0x55;
+    mem[0x8006] = ADD_C;
+    mem[0x8007] = HALT;
+    mem[0x22ff] = 0x1;
     // End Program
 
     // Execute
