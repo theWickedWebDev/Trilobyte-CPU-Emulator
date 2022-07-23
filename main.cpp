@@ -242,14 +242,12 @@ struct CPU
         TST_D = 0x75,
         TST_IMM8 = 0x76,
         TST_MEM_IMM16 = 0x77,
-
         // JUMPS
         JUMP_IMM16 = 0x78,
         // CPU
         HALT = 0xff;
 
-    void
-    Execute(MEM &memory)
+    void Execute(MEM &memory)
     {
         while (1 == 1)
         {
@@ -289,6 +287,17 @@ struct CPU
                 Set_A(value);
             }
             break;
+            case ADD_C:
+            {
+                int res = (int)A + (int)C;
+                CF = (res >> 8) > 0;
+                SF = (res >> 8) & (0b1);
+                OF = ((res >> 7) ^ ((int)A >> 7)) & (res >> 7) ^ ((int)C >> 7);
+                ZF = res == 0x0;
+                printf("%d \n", res);
+                Set_A((Byte)res);
+            }
+            break;
             case JUMP_IMM16:
             {
                 Word address = FetchWord(memory);
@@ -297,6 +306,11 @@ struct CPU
             break;
             case HALT:
             {
+                printf("A: %d \n", (int)A);
+                printf("CF: %d | ", (int)CF);
+                printf("SF: %d | ", (int)SF);
+                printf("OF: %d | ", (int)OF);
+                printf("ZF: %d \n", (int)ZF);
                 std::exit(0);
             }
             break;
@@ -316,15 +330,26 @@ int main()
     CPU cpu;
     cpu.Reset(mem);
 
-    mem[0x0] = CPU::JUMP_IMM16;
-    mem[0x1] = 0x6;
-    mem[0x2] = 0x0;
-    mem[0x6] = CPU::MOV_C_IMM8;
-    mem[0x7] = 0x55;
-    mem[0x8] = CPU::PUSH_C;
-    mem[0x9] = CPU::POP_A;
-    mem[0xA] = CPU::HALT;
+    int num1;
+    cout << "Enter Operand:";
+    cin >> num1;
+    int num2;
+    cout << "Enter Operand:";
+    cin >> num2;
 
+    // Program Code
+    mem[0x0] = CPU::JUMP_IMM16;
+    mem[0x1] = 0x0;
+    mem[0x2] = 0x80;
+    mem[0x8000] = CPU::MOV_C_IMM8;
+    mem[0x8001] = num1;
+    mem[0x8002] = CPU::MOV_A_IMM8;
+    mem[0x8003] = num2;
+    mem[0x8004] = CPU::ADD_C;
+    mem[0x8005] = CPU::HALT;
+    // End Program
+
+    // Execute
     cpu.Execute(mem);
 
     return 0;
