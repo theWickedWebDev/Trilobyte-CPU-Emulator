@@ -94,13 +94,6 @@ struct CPU
         return value;
     }
 
-    void Set_A(Byte value)
-    {
-        A = value;
-        ZF = (A == 0);
-        SF = (A & 0b10000000) > 0;
-    }
-
     void Set_PC(Word value)
     {
         PC = value;
@@ -139,19 +132,19 @@ struct CPU
             {
                 PrintDetails("MOV_A_IMM8", instruction, SingleStep);
                 Byte value = FetchByte(memory);
-                Set_A(value);
+                A = value;
             }
             break;
             case MOV_A_C:
             {
                 PrintDetails("MOV_A_C", instruction, SingleStep);
-                Set_A(C);
+                A = C;
             }
             break;
             case MOV_A_D:
             {
                 PrintDetails("MOV_A_D", instruction, SingleStep);
-                Set_A(D);
+                A = D;
             }
             break;
             case MOV_A_MEM_CD:
@@ -159,14 +152,14 @@ struct CPU
                 PrintDetails("MOV_A_MEM_CD", instruction, SingleStep);
                 Word address = (C << 8) + D;
                 Byte value = ReadByte(memory, address);
-                Set_A(value);
+                A = value;
             }
             break;
             case MOV_A_MEM_F:
             {
                 PrintDetails("MOV_A_MEM_F", instruction, SingleStep);
                 Byte value = ReadByte(memory, F);
-                Set_A(value);
+                A = value;
             }
             break;
             case MOV_A_MEM_IMM16:
@@ -174,7 +167,7 @@ struct CPU
                 PrintDetails("MOV_A_MEM_IMM16", instruction, SingleStep);
                 Word address = FetchWord(memory);
                 Byte value = ReadByte(memory, address);
-                Set_A(value);
+                A = value;
             }
             break;
                 /* C REGISTER MOVES */
@@ -316,7 +309,7 @@ struct CPU
             {
                 PrintDetails("POP_A", instruction, SingleStep);
                 Byte value = Pop(memory);
-                Set_A(value);
+                A = value;
             }
             break;
             case ADD_C:
@@ -327,7 +320,7 @@ struct CPU
                 SF = (res >> 8) & (0b1);
                 OF = ((res >> 7) ^ ((int)A >> 7)) & (res >> 7) ^ ((int)C >> 7);
                 ZF = res == 0x0;
-                Set_A((Byte)res);
+                A = (Byte)res;
             }
             break;
             case JUMP_IMM16:
