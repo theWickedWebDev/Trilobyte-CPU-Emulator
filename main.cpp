@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+#include <string>
 using namespace std;
 
 using Byte = unsigned char;
@@ -247,7 +248,29 @@ struct CPU
         // CPU
         HALT = 0xff;
 
-    void Execute(MEM &memory)
+    void PrintDetails(string Label, Byte instruction, bool SingleStep)
+    {
+        if (SingleStep)
+        {
+            std::cout << "\x1B[2J\x1B[H"; // CLEARS OUPUT
+            int labelWidth = 14;
+            printf("\n[REGISTERS]\n");
+            printf("%*s", labelWidth, ((string) "[A]: " + to_string((int)A)).c_str());
+            printf("%*s", labelWidth, ((string) "[C]: " + to_string((int)C)).c_str());
+            printf("%*s", labelWidth, ((string) "[D]: " + to_string((int)D)).c_str());
+            printf("%*s", labelWidth, ((string) "[F]: " + to_string((int)F)).c_str());
+            printf("\n\n[FLAGS]\n");
+            printf("%*s", labelWidth, ((string) "[CF]: " + to_string((int)CF)).c_str());
+            printf("%*s", labelWidth, ((string) "[SF]: " + to_string((int)SF)).c_str());
+            printf("%*s", labelWidth, ((string) "[OF]: " + to_string((int)OF)).c_str());
+            printf("%*s", labelWidth, ((string) "[ZF]: " + to_string((int)ZF)).c_str());
+            printf("\n\n Next Instruction: %s 0x%x \n", Label.c_str(), instruction);
+
+            cin.get();
+        }
+    }
+
+    void Execute(MEM &memory, bool SingleStep)
     {
         while (1 == 1)
         {
@@ -256,61 +279,65 @@ struct CPU
             {
             case MOV_A_IMM8:
             {
+                PrintDetails("MOV_A_IMM8", instruction, SingleStep);
                 Byte value = FetchByte(memory);
                 Set_A(value);
             }
             break;
             case MOV_C_IMM8:
             {
+                PrintDetails("MOV_C_IMM8", instruction, SingleStep);
                 Byte value = FetchByte(memory);
                 C = value;
             }
             break;
             case MOV_A_C:
             {
+                PrintDetails("MOV_A_C", instruction, SingleStep);
                 Set_A(C);
             }
             break;
             case PUSH_A:
             {
+                PrintDetails("PUSH_A", instruction, SingleStep);
                 Push(A, memory);
             }
             break;
             case PUSH_C:
             {
+                PrintDetails("PUSH_C", instruction, SingleStep);
                 Push(C, memory);
             }
             break;
             case POP_A:
             {
+                PrintDetails("POP_A", instruction, SingleStep);
                 Byte value = Pop(memory);
                 Set_A(value);
             }
             break;
             case ADD_C:
             {
+                PrintDetails("ADD_C", instruction, SingleStep);
                 int res = (int)A + (int)C;
                 CF = (res >> 8) > 0;
                 SF = (res >> 8) & (0b1);
                 OF = ((res >> 7) ^ ((int)A >> 7)) & (res >> 7) ^ ((int)C >> 7);
                 ZF = res == 0x0;
-                printf("%d \n", res);
                 Set_A((Byte)res);
             }
             break;
             case JUMP_IMM16:
             {
+                PrintDetails("JUMP_IMM16", instruction, SingleStep);
                 Word address = FetchWord(memory);
                 Set_PC(address);
             }
             break;
             case HALT:
             {
-                printf("A: %d \n", (int)A);
-                printf("CF: %d | ", (int)CF);
-                printf("SF: %d | ", (int)SF);
-                printf("OF: %d | ", (int)OF);
-                printf("ZF: %d \n", (int)ZF);
+                PrintDetails("HALT", instruction, true);
+                // TODO: Change to cin and trigger interrupt? (NOP)
                 std::exit(0);
             }
             break;
@@ -330,11 +357,11 @@ int main()
     CPU cpu;
     cpu.Reset(mem);
 
-    int num1;
-    cout << "Enter Operand:";
+    int num1, num2;
+    printf("%s", "Add C to A \n");
+    cout << "Enter A: ";
     cin >> num1;
-    int num2;
-    cout << "Enter Operand:";
+    cout << "Enter C: ";
     cin >> num2;
 
     // Program Code
@@ -342,15 +369,16 @@ int main()
     mem[0x1] = 0x0;
     mem[0x2] = 0x80;
     mem[0x8000] = CPU::MOV_C_IMM8;
-    mem[0x8001] = num1;
+    mem[0x8001] = num2;
     mem[0x8002] = CPU::MOV_A_IMM8;
-    mem[0x8003] = num2;
+    mem[0x8003] = num1;
     mem[0x8004] = CPU::ADD_C;
     mem[0x8005] = CPU::HALT;
     // End Program
 
     // Execute
-    cpu.Execute(mem);
+    bool SingleStep = false;
+    cpu.Execute(mem, SingleStep);
 
     return 0;
 }
