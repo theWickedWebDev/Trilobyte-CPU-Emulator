@@ -56,15 +56,14 @@ struct CPU
         Memory.initialize();
     }
 
-    Byte FetchByte(u32 &Cycles, MEM &memory)
+    Byte FetchByte(MEM &memory)
     {
         Byte Data = memory[PC];
         PC++;
-        Cycles--;
         return Data;
     }
 
-    Word FetchWord(u32 &Cycles, MEM &memory)
+    Word FetchWord(MEM &memory)
     {
         Word Data = memory[PC];
         PC++;
@@ -72,59 +71,51 @@ struct CPU
         Data |= (memory[PC] << 8);
         PC++;
 
-        Cycles += 2;
         return Data;
     }
 
-    Byte ReadByte(MEM &Memory, Word Address, u32 &Cycles)
+    Byte ReadByte(MEM &Memory, Word Address)
     {
         Byte Data = Memory[Address];
-        Cycles--;
         return Data;
     }
 
-    void WriteByte(Byte value, u32 &Cycles, Word Address, MEM &Memory)
+    void WriteByte(Byte value, Word Address, MEM &Memory)
     {
         Memory[Address] = value;
-        Cycles--;
     }
 
     // Write two bytes
-    void WriteWord(Word Value, u32 &Cycles, Word Address, MEM &Memory)
+    void WriteWord(Word Value, Word Address, MEM &Memory)
     {
         Memory[Address] = Value & 0xFF;
         Memory[Address + 1] = (Value >> 8);
-        Cycles -= 2;
     }
 
-    void Push(Byte value, u32 &Cycles, MEM &Memory)
+    void Push(Byte value, MEM &Memory)
     {
-        WriteWord(value, Cycles, SP, Memory);
+        WriteWord(value, SP, Memory);
         SP--;
-        Cycles--;
     }
 
-    Byte Pop(u32 &Cycles, MEM &Memory)
+    Byte Pop(MEM &Memory)
     {
 
         SP++;
-        Byte value = ReadByte(Memory, SP, Cycles);
-        Cycles--;
+        Byte value = ReadByte(Memory, SP);
         return value;
     }
 
-    void Set_A(Byte value, u32 &Cycles)
+    void Set_A(Byte value)
     {
         A = value;
         ZF = (A == 0);
         SF = (A & 0b10000000) > 0;
-        Cycles--;
     }
 
-    void Set_PC(Word value, u32 &Cycles)
+    void Set_PC(Word value)
     {
         PC = value;
-        Cycles--;
     }
 
     static constexpr Byte
@@ -201,57 +192,107 @@ struct CPU
         POP_FLAGS = 0x45,
         POP_DS = 0x46,
         POP_SS = 0x47,
+        // ALU
+        ADD_C = 0x48,
+        ADD_D = 0x49,
+        ADD_IMM8 = 0x4a,
+        ADC_C = 0x4b,
+        ADC_D = 0x4c,
+        ADC_IMM8 = 0x4d,
+        SUB_C = 0x4e,
+        SUB_D = 0x4f,
+        SUB_IMM8 = 0x50,
+        SBB_C = 0x51,
+        SBB_D = 0x52,
+        SBB_IMM8 = 0x53,
+        AND_C = 0x54,
+        AND_D = 0x55,
+        AND_IMM = 0x56,
+        NAND_C = 0x57,
+        NAND_D = 0x58,
+        NAND_IMM = 0x59,
+        OR_C = 0x5a,
+        OR_D = 0x5b,
+        OR_IMM = 0x5c,
+        NOR_C = 0x5d,
+        NOR_D = 0x5e,
+        NOR_IMM = 0x5f,
+        XOR_C = 0x60,
+        XOR_D = 0x61,
+        XOR_IMM = 0x61,
+        XNOR_C = 0x62,
+        XNOR_D = 0x63,
+        XNOR_IMM = 0x64,
+        NOT_A = 0x65,
+        NOT_C = 0x66,
+        NOT_D = 0x67,
+        SHL = 0x68,
+        SHR = 0x69,
+        ASL = 0x6a,
+        ASR = 0x6b,
+        ROR = 0x6c,
+        ROL = 0x6d,
+        INC = 0x6e,
+        DEC = 0x6f,
+        CMP_C = 0x70,
+        CMP_D = 0x71,
+        CMP_IMM8 = 0x72,
+        CMP_MEM_IMM16 = 0x73,
+        TST_C = 0x74,
+        TST_D = 0x75,
+        TST_IMM8 = 0x76,
+        TST_MEM_IMM16 = 0x77,
+
         // JUMPS
-        JUMP_IMM16 = 0x48,
+        JUMP_IMM16 = 0x78,
         // CPU
         HALT = 0xff;
 
     void
-    Execute(u32 Cycles, MEM &memory)
+    Execute(MEM &memory)
     {
-        while (Cycles > 0)
+        while (1 == 1)
         {
-            Byte instruction = FetchByte(Cycles, memory);
+            Byte instruction = FetchByte(memory);
             switch (instruction)
             {
             case MOV_A_IMM8:
             {
-                Byte value = FetchByte(Cycles, memory);
-                Set_A(value, Cycles);
+                Byte value = FetchByte(memory);
+                Set_A(value);
             }
             break;
             case MOV_C_IMM8:
             {
-                Byte value = FetchByte(Cycles, memory);
+                Byte value = FetchByte(memory);
                 C = value;
-                Cycles--;
             }
             break;
             case MOV_A_C:
             {
-                Set_A(C, Cycles);
+                Set_A(C);
             }
             break;
             case PUSH_A:
             {
-                Push(A, Cycles, memory);
+                Push(A, memory);
             }
             break;
             case PUSH_C:
             {
-                Push(C, Cycles, memory);
+                Push(C, memory);
             }
             break;
             case POP_A:
             {
-                Byte value = Pop(Cycles, memory);
-                Set_A(value, Cycles);
+                Byte value = Pop(memory);
+                Set_A(value);
             }
             break;
             case JUMP_IMM16:
             {
-                Word address = FetchWord(Cycles, memory);
-                Set_PC(address, Cycles);
+                Word address = FetchWord(memory);
+                Set_PC(address);
             }
             break;
             case HALT:
@@ -262,7 +303,6 @@ struct CPU
             default:
             {
                 printf("Instruction not handled: %d", instruction);
-                Cycles = 0;
             }
             break;
             }
@@ -285,7 +325,7 @@ int main()
     mem[0x9] = CPU::POP_A;
     mem[0xA] = CPU::HALT;
 
-    cpu.Execute(20, mem);
+    cpu.Execute(mem);
 
     return 0;
 }
